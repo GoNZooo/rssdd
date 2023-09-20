@@ -169,9 +169,10 @@ func downloadFeedLoop(config feedConfiguration, db *sql.DB) {
 
 func addDownloadedItem(db *sql.DB, i item) error {
 	sqlStatement := `
-    insert into downloads (link, title) values (?, ?)
+    insert into downloads (link, title, created_at) values (?, ?, ?)
     `
-	_, err := db.Exec(sqlStatement, i.Link, i.Title)
+	createdAt := time.Now().Unix()
+	_, err := db.Exec(sqlStatement, i.Link, i.Title, createdAt)
 
 	return err
 }
@@ -219,7 +220,12 @@ func createDbPathIfNotExists(localShareFolder string) {
 
 func initializeDatabase(db *sql.DB) error {
 	sqlStmt := `
-    create table if not exists downloads (id integer not null primary key, title text, link text);
+    create table if not exists downloads (
+        id integer not null primary key,
+        title text,
+        link text,
+        created_at datetime default current_timestamp
+    );
     `
 	_, err := db.Exec(sqlStmt)
 	if err != nil {
