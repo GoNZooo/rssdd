@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/net/html/charset"
 	"gopkg.in/yaml.v3"
@@ -23,7 +24,10 @@ type item struct {
 }
 
 type config struct {
-	Feeds []feedConfiguration `yaml:"feeds"`
+	Feeds            []feedConfiguration `yaml:"feeds"`
+	DiscordAuthToken string              `yaml:"discord_token"`
+	DiscordChannel   string              `yaml:"discord_channel"`
+	discordChannelId string
 }
 
 type feedConfiguration struct {
@@ -40,9 +44,41 @@ func main() {
 	configPath := filepath.Join(localConfigFolder, "config.yaml")
 	createEmptyConfigIfNotExists(configPath)
 	config, err := readConfig(configPath)
-	fmt.Println(config)
 	dbPath := filepath.Join(localShareFolder, "downloads.db")
 	fmt.Printf("dbPath: %v\n", dbPath)
+
+	var discord *discordgo.Session
+	if config.DiscordAuthToken != "" {
+		discord, err = discordgo.New("Bot " + config.DiscordAuthToken)
+		if err != nil {
+			fmt.Println("error creating Discord session,", err)
+			return
+		}
+
+		err = discord.Open()
+		if err != nil {
+			fmt.Println("error opening connection,", err)
+			return
+		}
+
+		user, err := discord.User("@me")
+		if err != nil {
+			fmt.Println("error obtaining account details,", err)
+			return
+		}
+
+		fmt.Println("Logged in as " + user.Username + "#" + user.Discriminator)
+
+		for _, guild := range discord.State.Guilds {
+			for _, channel := range guild.Channels {
+				if channel.Name == config.DiscordChannel {
+					config.discordChannelId = channel.ID
+				}
+			}
+		}
+	}
+
+	fmt.Println(config)
 
 	db, err := sql.Open("sqlite3", "file:"+dbPath)
 	if err != nil {
@@ -60,7 +96,7 @@ func main() {
 
 	for _, feedConfig := range config.Feeds {
 		cfg := feedConfig
-		go downloadFeedLoop(cfg, db)
+		go downloadFeedLoop(cfg, db, discord, config.discordChannelId)
 	}
 
 	select {}
@@ -115,7 +151,12 @@ func readConfig(configPath string) (config config, err error) {
 	return config, nil
 }
 
-func downloadFeedLoop(config feedConfiguration, db *sql.DB) {
+func downloadFeedLoop(
+	config feedConfiguration,
+	db *sql.DB,
+	discord *discordgo.Session,
+	channelId string,
+) {
 	for {
 		items, err := downloadFeed(config.Url)
 		if err != nil {
@@ -161,9 +202,28 @@ func downloadFeedLoop(config feedConfiguration, db *sql.DB) {
 				continue
 			}
 			addDownloadedItem(db, item)
+			sendDiscordNotification(discord, item, channelId)
 		}
 
 		time.Sleep(time.Second * time.Duration(config.Interval))
+	}
+}
+
+func sendDiscordNotification(discord *discordgo.Session, item item, channelId string) {
+	if discord == nil {
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       item.Title,
+		URL:         item.Link,
+		Description: fmt.Sprintf("Downloaded '%s' (%s)", item.Title, item.Link),
+	}
+
+	_, err := discord.ChannelMessageSendEmbed(channelId, embed)
+	if err != nil {
+		fmt.Println("Error sending message:", err)
+		return
 	}
 }
 
