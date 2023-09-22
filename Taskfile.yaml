@@ -1,0 +1,32 @@
+version: 3
+
+tasks:
+  default:
+    cmds:
+      - task: test
+  silent: true
+
+  test:
+    depends:
+      - build
+    cmds:
+      - go test -v ./encoding/bencoding
+    method: none
+    sources:
+      - ./encoding/**/*.go
+      - go.mod
+    silent: true
+    aliases:
+      - t
+
+  build:
+    cmds:
+      - go build -o ./bin/rssdd ./cmd/rssdd
+    sources:
+      - ./cmd/**/*.go
+      - ./encoding/**/*.go
+      - go.mod
+      - go.sum
+    silent: true
+
+interval: 250ms
