@@ -9,7 +9,7 @@ import (
 func TestDecodeInt64(t *testing.T) {
 	data := bufio.NewReader(bytes.NewReader([]byte("i123e")))
 
-	i, err := DecodeInt64(data)
+	i, err := decodeInt64(data)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -18,7 +18,7 @@ func TestDecodeInt64(t *testing.T) {
 	}
 
 	data = bufio.NewReader(bytes.NewReader([]byte("i-123e")))
-	i, err = DecodeInt64(data)
+	i, err = decodeInt64(data)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestEncodeInt64(t *testing.T) {
 
 func TestDecodeString(t *testing.T) {
 	data := bufio.NewReader(bytes.NewReader([]byte("4:spam")))
-	s, err := DecodeString(data)
+	s, err := decodeString(data)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -82,13 +82,13 @@ func TestDecodeString(t *testing.T) {
 	}
 
 	data = bufio.NewReader(bytes.NewReader([]byte("4spam")))
-	s, err = DecodeString(data)
+	s, err = decodeString(data)
 	if err == nil {
 		t.Errorf("expected error, got %v", s)
 	}
 
 	data = bufio.NewReader(bytes.NewReader([]byte("6:spam")))
-	s, err = DecodeString(data)
+	s, err = decodeString(data)
 	if err == nil {
 		t.Errorf("expected error, got %v", s)
 	}
@@ -125,7 +125,7 @@ func TestEncodeString(t *testing.T) {
 
 func TestDecodeList(t *testing.T) {
 	data := bufio.NewReader(bytes.NewReader([]byte("4:spam3:hame")))
-	l, err := DecodeList(data)
+	l, err := decodeList(data)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -149,7 +149,7 @@ func TestDecodeList(t *testing.T) {
 	}
 
 	data = bufio.NewReader(bytes.NewReader([]byte("4:spam4:eggs")))
-	l, err = DecodeList(data)
+	l, err = decodeList(data)
 	if err == nil {
 		t.Errorf("expected error, got %v", l)
 	}

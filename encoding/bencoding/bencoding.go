@@ -28,19 +28,19 @@ func DecodeValue(r *bufio.Reader) (Bencode, error) {
 
 	switch leadingByte[0] {
 	case 'i':
-		i, err := DecodeInt64(r)
+		i, err := decodeInt64(r)
 		if err != nil {
 			return nil, err
 		}
 		return i, nil
 	case 'l':
-		l, err := DecodeList(r)
+		l, err := decodeList(r)
 		if err != nil {
 			return nil, err
 		}
 		return l, nil
 	case 'd':
-		d, err := DecodeDict(r)
+		d, err := decodeDict(r)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +50,7 @@ func DecodeValue(r *bufio.Reader) (Bencode, error) {
 		if err != nil {
 			return nil, err
 		}
-		s, err := DecodeString(r)
+		s, err := decodeString(r)
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +64,7 @@ func (i BencodeInt64) Encode() ([]byte, error) {
 	return []byte("i" + strconv.FormatInt(int64(i), 10) + "e"), nil
 }
 
-func DecodeInt64(r *bufio.Reader) (BencodeInt64, error) {
+func decodeInt64(r *bufio.Reader) (BencodeInt64, error) {
 	leadingByte := make([]byte, 1)
 	_, err := r.Read(leadingByte)
 
@@ -101,7 +101,7 @@ func (s BencodeString) Encode() ([]byte, error) {
 	return []byte(strconv.Itoa(len(s)) + ":" + string(s)), nil
 }
 
-func DecodeString(r *bufio.Reader) (BencodeString, error) {
+func decodeString(r *bufio.Reader) (BencodeString, error) {
 	data := make([]byte, 0)
 	for {
 		b := make([]byte, 1)
@@ -151,7 +151,7 @@ func (l BencodeList) Encode() ([]byte, error) {
 	return data, nil
 }
 
-func DecodeList(r *bufio.Reader) (BencodeList, error) {
+func decodeList(r *bufio.Reader) (BencodeList, error) {
 	l := make(BencodeList, 0, 0)
 	done := false
 	for !done {
@@ -196,7 +196,7 @@ func (d BencodeDict) Encode() ([]byte, error) {
 	return data, nil
 }
 
-func DecodeDict(r *bufio.Reader) (BencodeDict, error) {
+func decodeDict(r *bufio.Reader) (BencodeDict, error) {
 	d := make(BencodeDict)
 	done := false
 	for !done {
@@ -211,7 +211,7 @@ func DecodeDict(r *bufio.Reader) (BencodeDict, error) {
 			break
 		}
 		r.UnreadByte()
-		key, err := DecodeString(r)
+		key, err := decodeString(r)
 		if err != nil {
 			return nil, err
 		}

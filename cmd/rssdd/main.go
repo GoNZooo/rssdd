@@ -35,7 +35,7 @@ type feedConfiguration struct {
 	Interval       int              `yaml:"interval"`
 	Matches        []string         `yaml:"match"`
 	Folder         string           `yaml:"folder"`
-    Cookie         string           `yaml:"cookie"`
+	Cookie         string           `yaml:"cookie"`
 	matchesRegexen []*regexp.Regexp // Compiled after we read the config
 }
 
@@ -252,10 +252,10 @@ func checkAlreadyDownloaded(db *sql.DB, s string) (bool, error) {
 }
 
 func downloadFile(cookie string, url, filePath string) error {
-    request, err := http.NewRequest("GET", url, nil)
-    request.Header.Set("Cookie", cookie)
-    client := &http.Client{}
-    response, err := client.Do(request)
+	request, err := http.NewRequest("GET", url, nil)
+	request.Header.Set("Cookie", cookie)
+	client := &http.Client{}
+	response, err := client.Do(request)
 	if err != nil {
 		return err
 	}
