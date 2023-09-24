@@ -22,11 +22,14 @@ tasks:
   build:
     cmds:
       - go build -o ./bin/rssdd ./cmd/rssdd
+      - go build -o ./bin/torrent-read ./cmd/torrent-read
     sources:
       - ./cmd/**/*.go
       - ./encoding/**/*.go
       - go.mod
       - go.sum
     silent: true
+    aliases:
+      - b
 
 interval: 250ms

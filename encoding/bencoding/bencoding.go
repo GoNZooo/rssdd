@@ -2,6 +2,7 @@ package bencoding
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strconv"
 )
@@ -12,7 +13,7 @@ type BencodeDecodingError struct {
 }
 
 func (e BencodeDecodingError) Error() string {
-	return e.msg
+	return fmt.Sprintf("%s (%s)", e.msg, e.data)
 }
 
 type Bencode interface {
@@ -123,16 +124,22 @@ func decodeString(r *bufio.Reader) (BencodeString, error) {
 		return "", err
 	}
 
-	data = make([]byte, length)
-	bytesRead, err := r.Read(data)
-	if bytesRead != length {
-		return "", BencodeDecodingError{msg: "unexpected EOF when decoding string", data: data}
-	}
-	if err != nil {
-		return "", err
+	stringData := make([]byte, 0)
+	bytesRead := 0
+	for bytesRead < length {
+		buffer := make([]byte, length-bytesRead)
+		bytesReadNow, err := r.Read(buffer)
+		if bytesReadNow == 0 {
+			return "", BencodeDecodingError{msg: "unexpected EOF when decoding string", data: nil}
+		}
+		if err != nil {
+			return "", err
+		}
+		bytesRead += bytesReadNow
+		stringData = append(stringData, buffer[:bytesReadNow]...)
 	}
 
-	return BencodeString(string(data[:])), nil
+	return BencodeString(string(stringData[:])), nil
 }
 
 type BencodeList []Bencode
